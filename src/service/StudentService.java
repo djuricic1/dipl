@@ -2,6 +2,7 @@ package service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -9,6 +10,7 @@ import org.json.JSONObject;
 import com.google.gson.Gson;
 
 import dao.StudentDao;
+import model.Login;
 import model.Student;
 import redis.clients.jedis.Jedis;
 
@@ -17,21 +19,53 @@ public class StudentService implements StudentDao {
 	private static Jedis jedis;
 	private static StudentService studentService;
 	private static int counter = 1; 
-	private static final String DATA_NAME = "test2"; 
+	private static final String DATA_NAME = "test4"; 
 	
 	private StudentService() {
-		// make connection to redis server
-		
+			
 		jedis = new Jedis("localhost");
-		//Student student1 = new Student();
-		//student1.setId(counter++);
-		//student1.setName("Marko Markovic");
+
+	}
+	
+	public boolean checkToken(String username, String token) {
+		System.out.println(jedis.get(username));
+		System.out.println(token);
+		return jedis.get(username).equals(token);
+	}
+	
+	public String login(Login login) {
 		
-		//Gson gson = new Gson();
-		//String s = gson.toJson(student1);
+		Student student = getByUsername(login.getUsername());
+		if(student==null)
+			return null;
+		String token = null;
+		if(student.getPassword().equals(login.getPassword())) {		
+			token = UUID.randomUUID().toString().toUpperCase() + "#" + System.currentTimeMillis();
+			jedis.set(login.getUsername(), token);
+			
+		}
+		// wrong password
+		return token;
+	}
+	
+	private Student getByUsername(String username) {
+		List<String> list = jedis.lrange(DATA_NAME, 0 , counter); 
 		
-		//jedis.lpush(DATA_NAME, s);
+		Student result = null;
 		
+		for(int i = 0; i<list.size(); i++) { 
+			
+			String obj = list.get(i);
+			
+			Gson gson = new Gson();
+			Student s = gson.fromJson(obj, Student.class);
+			
+			if(s.getUsername().equals(username))
+				return s;
+		
+		} 
+		
+		return result;
 	}
 	
 	public static StudentService getInstance() {
@@ -44,7 +78,10 @@ public class StudentService implements StudentDao {
 	@Override
 	public Student addStudent(Student student) {
 		
-		student.setId(counter++);
+		//student.setId(counter++);
+		if(student.getId() == 0)
+			student.setId(System.currentTimeMillis());
+		//System.out.println(counter);
 		jedis.lpush(DATA_NAME, new Gson().toJson(student));
 		
 		return student;
@@ -62,10 +99,9 @@ public class StudentService implements StudentDao {
 			String obj = list.get(i);
 			
 			Gson gson = new Gson();
-			
-			//System.out.println(obj);	
+				
 			Student t = gson.fromJson(obj, Student.class);
-			System.out.println(t.getName());
+			
 		//	Student s = gson.fromJson(obj, Student.class);
 		
 			result.add(t);		
@@ -75,7 +111,7 @@ public class StudentService implements StudentDao {
 	}
 
 	@Override
-	public Student getById(int id) {
+	public Student getById(long id) {
 		
 		List<String> list = jedis.lrange(DATA_NAME, 0 , counter); 
 	
@@ -112,7 +148,7 @@ public class StudentService implements StudentDao {
 			Student s = gson.fromJson(obj, Student.class);
 			
 			if(s.getId() == student.getId()) {
-
+				
 				jedis.lset(DATA_NAME, i, gson.toJson(student));
 				return true;
 				
@@ -126,7 +162,7 @@ public class StudentService implements StudentDao {
 	}	
 
 	@Override
-	public boolean removeStudent(int id) {
+	public boolean removeStudent(long id) {
 		
 		Student student = getById(id);
 		

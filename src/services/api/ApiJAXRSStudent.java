@@ -29,7 +29,7 @@ public class ApiJAXRSStudent {
 	@Path("/{id}")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public Student getById(@PathParam("id") int id) {
+	public Student getById(@PathParam("id") long id) {
 		
 		return ss.getById(id);
 	}
@@ -45,7 +45,7 @@ public class ApiJAXRSStudent {
 	@Path("/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Student updateStudent(@PathParam("id") int id, Student student) {
+	public Student updateStudent(@PathParam("id") long id, Student student) {
 		student.setId(id);
 		ss.updateStudent(student);
 		return student;
@@ -53,7 +53,7 @@ public class ApiJAXRSStudent {
 	
 	@Path("/{id}")
 	@DELETE	
-	public boolean deleteById(@PathParam("id") int id) {
+	public boolean deleteById(@PathParam("id") long id) {
 		return ss.removeStudent(id);
 	}
 	

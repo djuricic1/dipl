@@ -7,9 +7,9 @@ import model.Student;
 public interface StudentDao {
 	Student addStudent(Student student);
 	ArrayList<Student> getAll();
-	Student getById(int id);
+	Student getById(long id);
 	boolean updateStudent(Student student);
-	boolean removeStudent(int id);
+	boolean removeStudent(long id);
 }
 
 
